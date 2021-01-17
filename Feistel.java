@@ -1,6 +1,12 @@
 import java.lang.Math;
 
+/**
+ * This is a class that encapsulates functionality necessary for implementing a feistel network.
+ * @author Pablo Scarpati
+ *
+ */
 public class Feistel {
+	//this is a list of substitution boxes that are used in this class
 	private static final int[][][] SUBSTITUTION_BOXES = {/* Substitution Box 1 */{{14, 4, 13, 1, 2, 15, 11, 8, 3, 10, 6, 12, 5, 9, 0, 7},
 			                                                                      {0, 15, 7, 4, 14, 2, 13, 1, 10, 6, 12, 11, 9, 5, 3, 8},
 			                                                                      {4, 1, 14, 8, 13, 6, 2, 11, 15, 12, 9, 7, 3, 10, 5, 0},
@@ -38,10 +44,12 @@ public class Feistel {
 	private byte[] inputText;
 	
 	public Feistel(byte[] inputText) {
+		//the key is initialised as a random 48-bit key
 		key = generateRandomArray(48);
 		this.setInputText(inputText);
 	}
 
+	//setters
 	public void setKey(byte[] key) {
 		this.key = key;
 	}
@@ -50,6 +58,12 @@ public class Feistel {
 		this.inputText = inputText;
 	}
 	
+	//public methods
+	
+	/**
+	 * This method encrypts the plaintext, returning the ciphertext.
+	 * @return The ciphertext as an array of bytes.
+	 */
 	public byte[] encrypt() {
 		byte[] left = new byte[this.inputText.length / 2];
 		System.arraycopy(this.inputText, 0, left, 0, this.inputText.length / 2);
@@ -67,6 +81,12 @@ public class Feistel {
 		return result;
 	}
 	
+	/**
+	 * This method treats the right half of the plaintext as specified in the Feistel Structure specification.
+	 * @param input - The plaintext (ideally, the half right of the original plaintext).
+	 * @param subkey - They key for this round.
+	 * @return The result of the function, as an array of bytes.
+	 */
 	public byte[] feistelFunction(byte[] input, byte[] subkey) {
 		//expansion
 		byte[] expandedInput = this.expansion(input);
@@ -83,6 +103,11 @@ public class Feistel {
 		return permutatedInput;
 	}
 	
+	/**
+	 * This method performs permutation.
+	 * @param input - The input of the function.
+	 * @return The permutated input.
+	 */
 	public byte[] permutation(byte[] input) {
 		byte[] result = new byte[input.length];
 		
@@ -98,16 +123,23 @@ public class Feistel {
 		return result;
 	}
 	
+	/**
+	 * This method performs substitution on an input by using a list of S-Boxes.
+	 * @param input - The input of the function.
+	 * @return The substituted input.
+	 */
 	public byte[] substitution(byte[] input) {
 		int rows = 8;
 		int cols = 6;
 		
+		//the input is divided into 8 parts of 6 bits each.
 		byte[][] dividedInput = new byte[rows][cols];
 		
 		for(int i = 0; i < rows; i++) {
 			System.arraycopy(input, i * cols, dividedInput[i], 0, cols);
 		}
 		
+		//the output of the substitution will be 8 4-bit blocks.
 		int newCols = 4;
 		
 		byte[][] dividedResult = new byte[rows][newCols];
@@ -116,6 +148,7 @@ public class Feistel {
 			dividedResult[i] = this.singleSubstitution(dividedInput[i], SUBSTITUTION_BOXES[i]);
 		}
 		
+		//the 8 4-bit blocks are united in the result array.
 		byte[] result = new byte[32];
 		
 		for(int i = 0; i < newCols; i++) {
@@ -125,9 +158,17 @@ public class Feistel {
 		return result;
 	}
 	
+	/**
+	 * This method performs a single substitution operation with a given S-Box.
+	 * @param input - The text to be substituted.
+	 * @param sBox - The chosen S-Box.
+	 * @return The substituted 4-bit block.
+	 */
 	public byte[] singleSubstitution(byte[] input, int[][] sBox) {
 		
+		//the extreme bits are used to choose the row of the S-Box.
 		byte[] extremeBits = {input[0], input[input.length - 1]};
+		//the middle bits are used to choose the column of the S-Box.
 		byte[] middleBits = new byte[input.length - 2];
 		
 		int counter = 0;
@@ -147,6 +188,11 @@ public class Feistel {
 		return byteSubstitution;
 	}
 	
+	/**
+	 * This method performs expansion on the input text.
+	 * @param input - The input text.
+	 * @return The expanded input.
+	 */
 	public byte[] expansion(byte[] input) {
 		int[] expansionMatrix = {32, 1,  2,  3,  4,  5, 
 								 4,  5,  6,  7,  8,  9,
@@ -167,6 +213,11 @@ public class Feistel {
 		return expandedInput;
 	}
 	
+	/**
+	 * This method generates a random byte array of a chosen length.
+	 * @param length - The chosen length.
+	 * @return The random byte array.
+	 */
 	public static byte[] generateRandomArray(int length) {
 		byte[] randomArray = new byte[length];
 		
@@ -182,14 +233,6 @@ public class Feistel {
 		}
 		
 		return randomArray;
-	}
-	
-	private void printByteArray(byte[] array) {
-		for(int i = 0; i < array.length; i++) {
-			System.out.print(array[i]);
-		}
-		
-		System.out.println();
 	}
 	
 	/**
@@ -220,7 +263,12 @@ public class Feistel {
 		}
 	}
 	
-	public int toDecimal(byte[] input) {
+	/**
+	 * This method converts a byte array into a decimal number.
+	 * @param input - The byte array.
+	 * @return The decimal number.
+	 */
+	private int toDecimal(byte[] input) {
 		int result = 0;
 		int position = 0;
 		
@@ -235,6 +283,11 @@ public class Feistel {
 		return result;
 	}
 	
+	/**
+	 * This method converts a decimal input into binary.
+	 * @param input - The integer input.
+	 * @return The binary output.
+	 */
 	private byte[] toBinary(int input) {
 		byte[] result = new byte[4];
 		
